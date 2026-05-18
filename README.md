@@ -1,14 +1,20 @@
 # opencode-openai-fallback
 
-Stack your own workspaces. Keep opencode moving.
+Keep opencode moving when one ChatGPT workspace hits a limit.
 
 ![opencode-openai-fallback social card](assets/social-card.svg)
 
-Connect up to four of your own authenticated ChatGPT personal, Plus, Pro, Business, or Team workspaces and get up to 4x more opencode headroom when one workspace hits `usage limit reached`.
+If opencode is part of your daily workflow, the failure mode is familiar: one ChatGPT workspace hits a limit and everything stops. `opencode-openai-fallback` gives opencode a clean route across up to four of your own authenticated workspaces.
 
-This is for people who already use opencode with OpenAI ChatGPT auth and have more than one legitimate workspace available. It does not create accounts, share tokens, remove OpenAI limits, or promise unlimited usage.
+When one workspace returns a limit-like response, opencode can retry through the next profile instead of making you stop, switch accounts, and rebuild your flow.
 
-## One-command install
+```text
+pp -> ps -> sp -> ss
+```
+
+Built for people who already use opencode with OpenAI ChatGPT auth and have more than one legitimate personal, Plus, Pro, Business, or Team workspace available. It does not create accounts, share tokens, remove provider limits, or promise unlimited usage. Availability and limits vary by account and region.
+
+## Install in one command
 
 Windows PowerShell:
 
@@ -16,43 +22,41 @@ Windows PowerShell:
 irm https://raw.githubusercontent.com/VE5ETA/opencode-openai-fallback/main/install.ps1 | iex
 ```
 
-The installer also installs opencode if it is missing. It tries `npm install -g opencode-ai` first, then Scoop, then Chocolatey.
+The installer copies the fallback plugin and helper script, registers the plugin in your opencode config, and adds the PowerShell shortcuts. If opencode is missing, it tries to install `opencode-ai` with npm, then Scoop, then Chocolatey.
 
-If you do not want plain `opencode` to call the fallback wrapper, use this version:
+Open a new PowerShell window after installing.
 
-```powershell
-& ([scriptblock]::Create((irm https://raw.githubusercontent.com/VE5ETA/opencode-openai-fallback/main/install.ps1))) -NoOpencodeFunction
+## What you get
+
+- Up to 4x more opencode headroom across your own authenticated workspaces.
+- Automatic fallback when one workspace returns a usage-limit, rate-limit, or quota-like response.
+- One shared opencode session database, so `resume` still points at the same history.
+- Separate auth storage per workspace profile, so tokens are not mixed together.
+- Fallback for both the interactive opencode TUI and `opencode run ...`.
+- Plain `opencode` support, so your daily command does not need to change.
+
+## The profile map
+
+The short names are intentionally simple. They describe the fallback order and the kind of workspace behind each login.
+
+```text
+pp = primary personal
+ps = primary shared
+sp = secondary personal
+ss = secondary shared
 ```
 
-## Why this exists
+Default route:
 
-opencode sessions are easy to interrupt when a single OpenAI workspace hits a usage limit. The usual fix is manual: stop, switch accounts or workspaces, restart, and hope your session history still lines up.
+```text
+pp -> ps -> sp -> ss
+```
 
-This repo packages a cleaner setup:
-
-- Separate OpenAI auth stores for four workspace profiles.
-- One shared opencode session database so `resume` stays useful.
-- Automatic fallback order: `pp -> ps -> sp -> ss`.
-- In-process fallback for the interactive opencode TUI.
-- CLI fallback for `opencode run ...`.
-
-If you have more than one legitimate ChatGPT workspace, this helps opencode use those workspaces without manual switching. Availability, limits, and account eligibility vary by account and region.
+You can login to one profile or all four. The fallback only uses profiles that are actually authenticated.
 
 ## Quick start
 
-If you cloned this repo, run:
-
-```powershell
-powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
-```
-
-If you do not want the installer to make plain `opencode` call the wrapper, run:
-
-```powershell
-powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -NoOpencodeFunction
-```
-
-Open a new PowerShell window, then login to each workspace you want to use:
+Login to each workspace you want opencode to use:
 
 ```powershell
 ocai login pp
@@ -61,14 +65,16 @@ ocai login sp
 ocai login ss
 ```
 
-Use opencode normally:
+Use the matching browser account and ChatGPT workspace during each login.
+
+Then use opencode normally:
 
 ```powershell
 opencode
 opencode run "fix the tests"
 ```
 
-Profile shortcuts:
+Need a specific workspace?
 
 ```powershell
 ocpp  # primary personal
@@ -78,11 +84,31 @@ ocss  # secondary shared
 ocraw # raw opencode.cmd without the wrapper
 ```
 
-Quit and restart opencode after installing. opencode loads config and plugins at startup.
+If you do not want plain `opencode` to call the fallback wrapper, install with this command instead:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/VE5ETA/opencode-openai-fallback/main/install.ps1))) -NoOpencodeFunction
+```
+
+## Before and after
+
+Before:
+
+- opencode hits `usage limit reached`.
+- You stop the session.
+- You switch accounts or workspaces manually.
+- You restart and hope your session history still lines up.
+
+After:
+
+- opencode starts on `pp`.
+- If `pp` hits a limit-like response, the plugin retries with `ps`.
+- If needed, it continues through `sp` and `ss`.
+- Sessions stay tied to the same `opencode.db`, so `resume` stays useful.
 
 ## How it works
 
-The PowerShell helper sets one auth directory per profile:
+The PowerShell helper gives each profile its own OpenAI auth directory:
 
 ```text
 pp = primary personal
@@ -91,30 +117,27 @@ sp = secondary personal
 ss = secondary shared
 ```
 
-Each profile gets its own OpenAI OAuth login. Sessions stay shared through one `opencode.db`, so switching profiles does not split your opencode history.
+All profiles point at the same opencode session database:
 
-The plugin watches OpenAI OAuth requests inside opencode. If a response is a clear usage-limit, rate-limit, or quota response, it retries the same request with the next authenticated profile.
+```text
+~/.local/share/opencode/opencode.db
+```
+
+The plugin runs inside opencode and watches OpenAI OAuth requests. When it sees a clear usage-limit, rate-limit, or quota-like response, it retries the same request with the next authenticated profile.
+
+For one-shot commands, the wrapper applies the same route to `opencode run ...`.
 
 ## Safety boundaries
 
 Use this with your own accounts and workspaces.
 
-Do not publish tokens. Do not copy `auth.json` between machines you do not control. Do not use this to share access with other people. Do not describe this as unlimited usage or a way to bypass limits.
+Do not publish tokens. Do not copy `auth.json` between machines you do not control. Do not use this to share access with other people.
 
-Good public wording:
-
-- "up to 4x more opencode headroom"
-- "your own authenticated workspaces"
-- "automatic fallback when one workspace hits a limit"
-- "availability and limits vary"
-
-Bad public wording:
-
-- "unlimited GPT"
-- "bypass OpenAI limits"
-- "free exploit"
+This is workspace fallback, not unlimited usage. It helps opencode use the authenticated workspaces you already have access to. Account eligibility, availability, and limits vary.
 
 ## Verify
+
+From a cloned repo:
 
 ```powershell
 node .\tests\test-openai-auto-fallback.mjs
