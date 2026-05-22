@@ -128,7 +128,7 @@ invoke_opencode_captured() {
 action="run"
 selection="pp"
 explicit_profile=0
-opencode_args=()
+declare -a opencode_args=()
 
 if [[ $# -gt 0 ]]; then
   first="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
@@ -190,25 +190,25 @@ if [[ $explicit_profile -eq 0 && ${#opencode_args[@]} -gt 0 && "$(printf '%s' "$
   should_fallback=1
 fi
 
-  fallback_order=("pp" "ps" "sp" "ss")
-  if [[ $should_fallback -eq 1 ]]; then
-    tmp="$(mktemp)"
-    for profile_key in "${fallback_order[@]}"; do
-      use_profile "$profile_key"
-      set +e
-      invoke_opencode_captured "$tmp" "${opencode_args[@]}"
-      exit_code=$?
-      set -e
-      if [[ $exit_code -eq 0 ]]; then
-        rm -f "$tmp"
-        exit 0
-      fi
+fallback_order=("pp" "ps" "sp" "ss")
+if [[ $should_fallback -eq 1 ]]; then
+  tmp="$(mktemp)"
+  for profile_key in "${fallback_order[@]}"; do
+    use_profile "$profile_key"
+    set +e
+    invoke_opencode_captured "$tmp" "${opencode_args[@]}"
+    exit_code=$?
+    set -e
+    if [[ $exit_code -eq 0 ]]; then
+      rm -f "$tmp"
+      exit 0
+    fi
 
-      output="$(cat "$tmp" 2>/dev/null || true)"
-      if ! is_limit_output "$output"; then
-        rm -f "$tmp"
-        exit "$exit_code"
-      fi
+    output="$(cat "$tmp" 2>/dev/null || true)"
+    if ! is_limit_output "$output"; then
+      rm -f "$tmp"
+      exit "$exit_code"
+    fi
 
     printf '%s\n' "OpenAI profile limit hit; trying next profile..."
   done
@@ -217,5 +217,9 @@ fi
 fi
 
 use_profile "$key"
-invoke_opencode_direct "${opencode_args[@]}"
+if [[ ${#opencode_args[@]} -gt 0 ]]; then
+  invoke_opencode_direct "${opencode_args[@]}"
+else
+  invoke_opencode_direct
+fi
 exit $?

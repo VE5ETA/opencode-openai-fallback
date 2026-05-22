@@ -101,7 +101,8 @@ install_opencode_if_missing() {
   die "Could not install opencode automatically. Install it from https://opencode.ai/docs/ and rerun."
 }
 
-script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+script_source="${BASH_SOURCE[0]-$0}"
+script_dir="$(cd "$(dirname "$script_source")" && pwd)"
 local_root=""
 if [[ -n "$SOURCE_ROOT" ]]; then
   local_root="$SOURCE_ROOT"
@@ -390,13 +391,21 @@ EOF
 
   if [[ "$existing" == *"$begin"* ]]; then
     local tmp
+    local block_file
     tmp="$(mktemp)"
-    awk -v begin="$begin" -v end="$end" -v block="$block" '
-      $0 == begin { print block; inblock = 1; next }
+    block_file="$(mktemp)"
+    printf '%s\n' "$block" > "$block_file"
+    awk -v begin="$begin" -v end="$end" -v block_file="$block_file" '
+      function print_block() {
+        while ((getline line < block_file) > 0) print line
+        close(block_file)
+      }
+      $0 == begin { print_block(); inblock = 1; next }
       $0 == end { inblock = 0; next }
       !inblock { print }
     ' "$rc" > "$tmp"
     mv "$tmp" "$rc"
+    rm -f "$block_file"
   else
     if [[ -n "$existing" && "${existing: -1}" != $'\n' ]]; then
       printf '\n' >> "$rc"
@@ -418,4 +427,3 @@ ensure_shell_profile
 log "Installed opencode-openai-fallback."
 log "Open a new terminal window and restart opencode before testing."
 log "Login commands: ocai login pp; ocai login ps; ocai login sp; ocai login ss"
-

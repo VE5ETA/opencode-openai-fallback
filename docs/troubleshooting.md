@@ -74,3 +74,27 @@ opencode
 ```
 
 Remove the variable or open a fresh shell to enable fallback again.
+
+## macOS: `BASH_SOURCE[0]: unbound variable` during install
+
+This can happen if you run the installer via stdin (for example `curl ... | bash`) with an older installer version.
+
+Fix:
+
+- Rerun the install with the latest `install.sh`, or run from a local checkout: `bash ./install.sh --source-root .`
+
+## macOS: `awk: newline in string` during install
+
+BSD `awk` can error when the installer tries to replace the managed multi-line shell block.
+
+Fix:
+
+- Rerun the installer with the latest `install.sh`. It avoids passing multi-line strings via `awk -v`.
+
+## `opencode-openai.sh: ... opencode_args[@]: unbound variable`
+
+This can happen on older Bash versions when the wrapper forwards zero args.
+
+Fix:
+
+- Rerun the installer so `~/.config/opencode/opencode-openai.sh` is updated, then restart your shell.
