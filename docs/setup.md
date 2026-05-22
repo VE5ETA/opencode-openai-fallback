@@ -1,15 +1,39 @@
 # Setup
 
-This setup is Windows-first. The plugin is JavaScript, but the installer and command shortcuts are PowerShell.
+The plugin is JavaScript and works cross-platform. Installers + command shortcuts are available for Windows (PowerShell) and macOS (bash/zsh).
 
 ## Requirements
 
-- opencode installed, or Node.js/Scoop/Chocolatey available so the installer can install opencode.
+- opencode installed, or Node.js/Homebrew (macOS) or Node.js/Scoop/Chocolatey (Windows) available so the installer can install opencode.
 - Node.js available as `node` for the test script.
-- Windows PowerShell 5.1 or newer.
+- Windows PowerShell 5.1+ (Windows install), or bash/zsh (macOS install).
 - One or more ChatGPT workspaces you are allowed to use.
 
 ## Install
+
+### macOS / Linux
+
+One-command install:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/VE5ETA/opencode-openai-fallback/main/install.sh | bash
+```
+
+From a cloned repo:
+
+```sh
+bash ./install.sh
+```
+
+If you want to keep plain `opencode` untouched and use only `ocai`/`ocpp`/`ocps`/`ocsp`/`ocss`, run:
+
+```sh
+bash ./install.sh --no-opencode-function
+```
+
+Open a new terminal window after installing.
+
+### Windows
 
 One-command install:
 
@@ -111,4 +135,12 @@ Run local tests from the repo:
 node .\tests\test-openai-auto-fallback.mjs
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tests\test-openai-wrapper.ps1
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tests\test-install.ps1
+```
+
+On macOS / Linux:
+
+```sh
+node ./tests/test-openai-auto-fallback.mjs
+bash ./tests/test-openai-wrapper.sh
+bash ./tests/test-install.sh
 ```

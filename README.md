@@ -16,15 +16,22 @@ Built for people who already use opencode with OpenAI ChatGPT auth and have more
 
 ## Install in one command
 
+macOS / Linux (bash/zsh):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/VE5ETA/opencode-openai-fallback/main/install.sh | bash
+```
+
 Windows PowerShell:
 
 ```powershell
 irm https://raw.githubusercontent.com/VE5ETA/opencode-openai-fallback/main/install.ps1 | iex
 ```
 
-The installer copies the fallback plugin and helper script, registers the plugin in your opencode config, and adds the PowerShell shortcuts. If opencode is missing, it tries to install `opencode-ai` with npm, then Scoop, then Chocolatey.
+The installer copies the fallback plugin and helper script, registers the plugin in your opencode config, and adds `ocai`/`ocpp`/`ocps`/`ocsp`/`ocss` shortcuts to your shell profile. If opencode is missing, it tries to install `opencode-ai` with npm (and then Scoop/Chocolatey on Windows, or Homebrew on macOS).
 
 Open a new PowerShell window after installing.
+On macOS, open a new terminal window after installing.
 
 ## What you get
 
@@ -144,6 +151,14 @@ node .\tests\test-openai-auto-fallback.mjs
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tests\test-openai-wrapper.ps1
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\tests\test-install.ps1
 powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File .\scripts\verify-no-secrets.ps1
+```
+
+On macOS / Linux:
+
+```sh
+node ./tests/test-openai-auto-fallback.mjs
+bash ./tests/test-openai-wrapper.sh
+bash ./tests/test-install.sh
 ```
 
 ## Docs
