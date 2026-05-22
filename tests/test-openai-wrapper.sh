@@ -37,6 +37,12 @@ EOF
 chmod +x "${bin}/opencode"
 
 rm -f "$capture"
+bash "$script" >/dev/null
+line="$(tail -n 1 "$capture")"
+[[ "$line" == PROFILE=pp$'\t'* ]] || { echo "Expected default PROFILE=pp, got: $line" >&2; exit 1; }
+[[ "$line" == *$'\t'"ARGS=" ]] || { echo "Expected forwarded empty args, got: $line" >&2; exit 1; }
+
+rm -f "$capture"
 bash "$script" pp debug paths >/dev/null
 line="$(tail -n 1 "$capture")"
 expected_data_home="${HOME}/.local/share-opencode-openai-primary-personal"

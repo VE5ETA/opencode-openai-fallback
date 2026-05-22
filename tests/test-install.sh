@@ -38,11 +38,17 @@ EOF
 
   printf '%s\n' "# existing profile content" > "$rc"
 
+  extra_args=()
   if [[ "$no_opencode_function" == "1" ]]; then
-    bash "$installer" --source-root "$repo_root" --shell-rc "$rc" --no-opencode-function >/dev/null
-  else
-    bash "$installer" --source-root "$repo_root" --shell-rc "$rc" >/dev/null
+    extra_args+=(--no-opencode-function)
   fi
+
+  # Run twice to exercise managed-block replacement (BSD awk cannot accept multi-line -v strings).
+  bash "$installer" --source-root "$repo_root" --shell-rc "$rc" "${extra_args[@]}" >/dev/null
+  bash "$installer" --source-root "$repo_root" --shell-rc "$rc" "${extra_args[@]}" >/dev/null
+
+  # Simulate `curl ... | bash` stdin execution (BASH_SOURCE may be unset).
+  cat "$installer" | bash -s -- --source-root "$repo_root" --shell-rc "$rc" "${extra_args[@]}" >/dev/null
 
   [[ -f "${HOME}/.config/opencode/plugin/openai-auto-fallback.mjs" ]] || { echo "Expected plugin installed" >&2; exit 1; }
   [[ -f "${HOME}/.config/opencode/opencode-openai.sh" ]] || { echo "Expected helper installed" >&2; exit 1; }
@@ -54,6 +60,8 @@ EOF
 
   profile="$(cat "$rc")"
   printf '%s\n' "$profile" | grep -q 'opencode-openai-fallback BEGIN' || { echo "Expected managed shell block present" >&2; exit 1; }
+  begin_count="$(printf '%s\n' "$profile" | grep -c 'opencode-openai-fallback BEGIN' | tr -d '[:space:]')"
+  [[ "$begin_count" == "1" ]] || { echo "Expected one managed block, found $begin_count" >&2; exit 1; }
   printf '%s\n' "$profile" | grep -q '^ocai()' || { echo "Expected ocai function present" >&2; exit 1; }
   if [[ "$no_opencode_function" == "1" ]]; then
     if printf '%s\n' "$profile" | grep -q '^opencode()'; then
